@@ -160,6 +160,11 @@ void FastAccelStepperEngine::manageSteppers() {
   for (uint8_t i = 0; i < MAX_STEPPER; i++) {
     FastAccelStepper* s = _stepper[i];
     if (s) {
+      if(s->isHomeSwitchPressed() && s->_isDoingHome) {
+        s->stopMove();
+        s->setCurrentPosition(0);
+        s->_isDoingHome = false;
+      }
 #ifdef SUPPORT_EXTERNAL_DIRECTION_PIN
       if (s->externalDirPinChangeCompletedIfNeeded()) {
         s->fill_queue();
@@ -168,6 +173,8 @@ void FastAccelStepperEngine::manageSteppers() {
       s->fill_queue();
 #endif
     }
+
+
   }
 
   // Check for auto disable
@@ -599,6 +606,10 @@ void FastAccelStepper::setEnablePin(uint8_t enablePin,
     }
   }
 }
+void FastAccelStepper::setHomeSwitchPin(uint8_t home_switch_pin) {
+  _home_switch_pin = home_switch_pin;
+  pinMode(_home_switch_pin, INPUT);
+}
 void FastAccelStepper::setAutoEnable(bool auto_enable) {
   _autoEnable = auto_enable;
   if (auto_enable && (_off_delay_count == 0)) {
@@ -628,6 +639,7 @@ void FastAccelStepper::setDelayToDisable(uint16_t delay_ms) {
 }
 MoveResultCode FastAccelStepper::runForward() { return _rg.startRun(true); }
 MoveResultCode FastAccelStepper::runBackward() { return _rg.startRun(false); }
+MoveResultCode FastAccelStepper::home() { _isDoingHome = true; return runBackward(); }
 MoveResultCode FastAccelStepper::moveTo(int32_t position, bool blocking) {
   MoveResultCode res = _rg.moveTo(position, &fas_queue[_queue_num].queue_end);
   if ((res == MOVE_OK) && blocking) {
@@ -932,6 +944,12 @@ void FastAccelStepper::backwardStep(bool blocking) {
 int32_t FastAccelStepper::getCurrentPosition() {
   return fas_queue[_queue_num].getCurrentPosition();
 }
+bool FastAccelStepper::isHomeSwitchPressed() {
+    if (_home_switch_pin == PIN_UNDEFINED) {
+      return false;
+    }
+    return (digitalRead(_home_switch_pin) == LOW);
+  }
 MoveTimedResultCode FastAccelStepper::moveTimed(int16_t steps,
                                                 uint32_t duration,
                                                 uint32_t* actual_duration,

@@ -316,6 +316,10 @@ class FastAccelStepper {
   inline uint8_t getEnablePinHighActive() { return _enablePinHighActive; }
   inline uint8_t getEnablePinLowActive() { return _enablePinLowActive; }
 
+
+  // ## Home Switch Pin
+  void setHomeSwitchPin(uint8_t home_switch_pin);
+
   // using enableOutputs/disableOutputs the stepper can be enabled and disabled
   // For a running motor with autoEnable set, disableOutputs() will return false
   bool enableOutputs();   // returns true, if enabled
@@ -522,6 +526,7 @@ class FastAccelStepper {
   // return value as with move/moveTo
   MoveResultCode runForward();
   MoveResultCode runBackward();
+  MoveResultCode home();
 
   // ### forwardStep() and backwardStep()
   // forwardStep()/backwardstep() can be called, while stepper is not moving
@@ -714,6 +719,8 @@ class FastAccelStepper {
   // completed
   int32_t getPositionAfterCommandsCompleted();
 
+  bool isHomeSwitchPressed();
+
   // Get the future speed of the stepper after all commands in queue are
   // completed. This is in µs. Returns 0 for stopped motor
   //
@@ -739,6 +746,8 @@ class FastAccelStepper {
   // Pretty low level, use with care or not at all
   void detachFromPin();
   void reAttachToPin();
+
+  inline bool isDoingHome() { return _isDoingHome; }
 
   // ## ESP32 only: Free pulse counter
   // These four functions are only available on esp32.
@@ -822,6 +831,7 @@ class FastAccelStepper {
   uint8_t _enablePinLowActive;
   uint8_t _enablePinHighActive;
   uint8_t _queue_num;
+  uint8_t _home_switch_pin = PIN_UNDEFINED;
 
   uint16_t _dir_change_delay_ticks;
   uint32_t _on_delay_ticks;
@@ -829,6 +839,8 @@ class FastAccelStepper {
   uint16_t _auto_disable_delay_counter;
 
   uint32_t _forward_planning_in_ticks;
+
+  bool _isDoingHome = false;
 
 #if defined(SUPPORT_ESP32_PULSE_COUNTER) && (ESP_IDF_VERSION_MAJOR == 5)
   pcnt_unit_handle_t _attached_pulse_unit;
