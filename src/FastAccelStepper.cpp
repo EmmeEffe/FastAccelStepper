@@ -161,7 +161,7 @@ void FastAccelStepperEngine::manageSteppers() {
     FastAccelStepper* s = _stepper[i];
     if (s) {
       if(s->isHomeSwitchPressed() && s->_isDoingHome) {
-        s->stopMove();
+        s->forceStop();
         s->setCurrentPosition(0);
         s->_isDoingHome = false;
       }
@@ -639,7 +639,7 @@ void FastAccelStepper::setDelayToDisable(uint16_t delay_ms) {
 }
 MoveResultCode FastAccelStepper::runForward() { return _rg.startRun(true); }
 MoveResultCode FastAccelStepper::runBackward() { return _rg.startRun(false); }
-MoveResultCode FastAccelStepper::home() { _isDoingHome = true; return runBackward(); }
+void FastAccelStepper::home() { _isDoingHome = true;}
 MoveResultCode FastAccelStepper::moveTo(int32_t position, bool blocking) {
   MoveResultCode res = _rg.moveTo(position, &fas_queue[_queue_num].queue_end);
   if ((res == MOVE_OK) && blocking) {
@@ -948,7 +948,7 @@ bool FastAccelStepper::isHomeSwitchPressed() {
     if (_home_switch_pin == PIN_UNDEFINED) {
       return false;
     }
-    return (digitalRead(_home_switch_pin) == LOW);
+    return (digitalRead(_home_switch_pin) == HIGH);
   }
 MoveTimedResultCode FastAccelStepper::moveTimed(int16_t steps,
                                                 uint32_t duration,

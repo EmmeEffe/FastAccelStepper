@@ -526,7 +526,7 @@ class FastAccelStepper {
   // return value as with move/moveTo
   MoveResultCode runForward();
   MoveResultCode runBackward();
-  MoveResultCode home();
+  void home();
 
   // ### forwardStep() and backwardStep()
   // forwardStep()/backwardstep() can be called, while stepper is not moving
