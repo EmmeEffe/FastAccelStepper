@@ -317,8 +317,10 @@ class FastAccelStepper {
   inline uint8_t getEnablePinLowActive() { return _enablePinLowActive; }
 
 
-  // ## Home Switch Pin
+  // ## Endstop Pins
+  // The home switch is used as "minimum endstop".
   void setHomeSwitchPin(uint8_t home_switch_pin);
+  void setMaxSwitchPin(uint8_t max_switch_pin);
 
   // using enableOutputs/disableOutputs the stepper can be enabled and disabled
   // For a running motor with autoEnable set, disableOutputs() will return false
@@ -720,6 +722,7 @@ class FastAccelStepper {
   int32_t getPositionAfterCommandsCompleted();
 
   bool isHomeSwitchPressed();
+  bool isMaxSwitchPressed();
 
   // Get the future speed of the stepper after all commands in queue are
   // completed. This is in µs. Returns 0 for stopped motor
@@ -832,6 +835,7 @@ class FastAccelStepper {
   uint8_t _enablePinHighActive;
   uint8_t _queue_num;
   uint8_t _home_switch_pin = PIN_UNDEFINED;
+  uint8_t _max_switch_pin = PIN_UNDEFINED;
 
   uint16_t _dir_change_delay_ticks;
   uint32_t _on_delay_ticks;

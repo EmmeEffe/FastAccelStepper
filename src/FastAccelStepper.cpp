@@ -160,10 +160,19 @@ void FastAccelStepperEngine::manageSteppers() {
   for (uint8_t i = 0; i < MAX_STEPPER; i++) {
     FastAccelStepper* s = _stepper[i];
     if (s) {
-      if(s->isHomeSwitchPressed() && s->_isDoingHome) {
+      uint8_t ramp_state = s->rampState();
+      bool moving_forward = (ramp_state & RAMP_DIRECTION_COUNT_UP) != 0;
+      bool moving_backward = (ramp_state & RAMP_DIRECTION_COUNT_DOWN) != 0;
+
+      if (moving_backward && s->isHomeSwitchPressed()) {
         s->forceStop();
-        s->setCurrentPosition(0);
-        s->_isDoingHome = false;
+        if (s->_isDoingHome) {
+          s->setCurrentPosition(0);
+          s->_isDoingHome = false;
+        }
+      }
+      if (moving_forward && s->isMaxSwitchPressed()) {
+        s->forceStop();
       }
 #ifdef SUPPORT_EXTERNAL_DIRECTION_PIN
       if (s->externalDirPinChangeCompletedIfNeeded()) {
@@ -608,7 +617,15 @@ void FastAccelStepper::setEnablePin(uint8_t enablePin,
 }
 void FastAccelStepper::setHomeSwitchPin(uint8_t home_switch_pin) {
   _home_switch_pin = home_switch_pin;
-  pinMode(_home_switch_pin, INPUT);
+  if (_home_switch_pin != PIN_UNDEFINED) {
+    pinMode(_home_switch_pin, INPUT);
+  }
+}
+void FastAccelStepper::setMaxSwitchPin(uint8_t max_switch_pin) {
+  _max_switch_pin = max_switch_pin;
+  if (_max_switch_pin != PIN_UNDEFINED) {
+    pinMode(_max_switch_pin, INPUT);
+  }
 }
 void FastAccelStepper::setAutoEnable(bool auto_enable) {
   _autoEnable = auto_enable;
@@ -945,11 +962,17 @@ int32_t FastAccelStepper::getCurrentPosition() {
   return fas_queue[_queue_num].getCurrentPosition();
 }
 bool FastAccelStepper::isHomeSwitchPressed() {
-    if (_home_switch_pin == PIN_UNDEFINED) {
-      return false;
-    }
-    return (digitalRead(_home_switch_pin) == HIGH);
+  if (_home_switch_pin == PIN_UNDEFINED) {
+    return false;
   }
+  return (digitalRead(_home_switch_pin) == HIGH);
+}
+bool FastAccelStepper::isMaxSwitchPressed() {
+  if (_max_switch_pin == PIN_UNDEFINED) {
+    return false;
+  }
+  return (digitalRead(_max_switch_pin) == HIGH);
+}
 MoveTimedResultCode FastAccelStepper::moveTimed(int16_t steps,
                                                 uint32_t duration,
                                                 uint32_t* actual_duration,
